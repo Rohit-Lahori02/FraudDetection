@@ -3,29 +3,31 @@
 ## CSP 554 Big Data Technologies - Fraud Detection Project
 
 **Team Members:** Ansh Kaushik, Rohit Lahori, Hussain Bin Yousuf  
-**Timeline:** November 18 - December 10, 2025  
+**Timeline:** 2-Day Sprint Timeline (16-20 working hours)  
 **Platform:** AWS EMR with Apache Spark MLlib  
-**Dataset:** Kaggle Credit Card Fraud Detection (~284K transactions, 0.17% fraud rate)
+**Dataset:** creditcard_2023.csv (Credit Card Fraud Detection dataset)  
+**Development Approach:** Cursor-assisted rapid development for maximum efficiency
 
 ---
 
 ## Table of Contents
 
 1. [Project Architecture](#project-architecture)
-2. [Phase 0: Dataset Preparation](#phase-0-dataset-preparation)
-3. [Integration Points](#integration-points)
-4. [Git Branching Strategy](#git-branching-strategy)
-5. [S3 Bucket Structure](#s3-bucket-structure)
-6. [EMR Studio Workspace Organization](#emr-studio-workspace-organization)
-7. [Dependency Matrix](#dependency-matrix)
-8. [Cost Management](#cost-management)
-9. [Shared Utilities](#shared-utilities)
-10. [Conflict Resolution Protocols](#conflict-resolution-protocols)
-11. [Daily Standup Agenda](#daily-standup-agenda)
-12. [Code Review Checklist](#code-review-checklist)
-13. [Emergency Scenarios & Rollback Procedures](#emergency-scenarios--rollback-procedures)
-14. [Deliverable Checklist](#deliverable-checklist)
-15. [Final Integration & Testing Protocol](#final-integration--testing-protocol)
+2. [2-Day Execution Workflow](#2-day-execution-workflow)
+3. [Pre-Day 1: Dataset Preparation](#pre-day-1-dataset-preparation)
+4. [Integration Points](#integration-points)
+5. [Git Branching Strategy](#git-branching-strategy)
+6. [S3 Bucket Structure](#s3-bucket-structure)
+7. [EMR Studio Workspace Organization](#emr-studio-workspace-organization)
+8. [Dependency Matrix](#dependency-matrix)
+9. [Cost Management](#cost-management)
+10. [Shared Utilities](#shared-utilities)
+11. [Conflict Resolution Protocols](#conflict-resolution-protocols)
+12. [Daily Standup Agenda](#daily-standup-agenda)
+13. [Code Review Checklist](#code-review-checklist)
+14. [Emergency Scenarios & Rollback Procedures](#emergency-scenarios--rollback-procedures)
+15. [Deliverable Checklist](#deliverable-checklist)
+16. [Final Integration & Testing Protocol](#final-integration--testing-protocol)
 
 ---
 
@@ -98,49 +100,792 @@ Final Deliverables
 
 ---
 
-## Phase 0: Dataset Preparation
+## 2-Day Execution Workflow
 
-**Timeline:** November 18, 2025 (Day 1)  
-**Owner:** All team members (coordinated by Rohit)
+### Overview
 
-### Step 1: Kaggle API Setup
+**Total Timeline:** 2 days (16-20 working hours)  
+**EMR Cluster Sessions:** 3 sessions (~8-10 hours total)  
+**Cost Target:** <$5 with optimization  
+**Strategy:** Maximize parallel work, minimize EMR cluster time, use Cursor for rapid development
 
-```bash
-# Install Kaggle CLI
-pip install kaggle
+### Workflow Timeline Diagram
 
-# Create Kaggle API credentials
-# 1. Go to https://www.kaggle.com/account
-# 2. Create API token (download kaggle.json)
-# 3. Place in ~/.kaggle/kaggle.json (Linux/Mac) or C:\Users\<username>\.kaggle\kaggle.json (Windows)
-
-# Set permissions (Linux/Mac)
-chmod 600 ~/.kaggle/kaggle.json
-
-# Verify setup
-kaggle datasets list
+```
+Day 1 (Hours 0-10)                          Day 2 (Hours 10-20)
+┌─────────────────────────────────────┐    ┌─────────────────────────────────────┐
+│ H0-1: Setup (All)                   │    │ H10-12: Adversarial (Ansh+Hussain) │
+│ H1-2: Shared Utils (Parallel)       │    │ H12-14: Streaming (Rohit+Ansh)      │
+│ H2-4: Profiling (Hussain) [EMR-1]   │    │ H14-16: Integration (All)           │
+│ H4-6: Features (Rohit) [EMR-2]      │    │ H16-18: Documentation (Hussain)     │
+│ H6-8: Training (Rohit+Ansh) [EMR-2] │    │ H18-20: Final Polish (All)          │
+│ H8-10: Tuning (Ansh)                │    │                                     │
+└─────────────────────────────────────┘    └─────────────────────────────────────┘
 ```
 
-### Step 2: Download Dataset
+### Day 1: Foundation & Core Development (Hours 0-10)
+
+#### Hour 0-1: Initial Setup (All Together)
+
+**Goal:** Get all infrastructure and local environment ready
+
+**Rohit (Technical Lead):**
+
+- Create S3 bucket
+  ```bash
+  export BUCKET_NAME="csp554-fraud-detection-$(date +%s)"
+  aws s3 mb s3://$BUCKET_NAME --region us-east-1
+  ```
+- Upload creditcard_2023.csv to S3
+  ```bash
+  aws s3 cp creditcard_2023.csv/creditcard_2023.csv s3://$BUCKET_NAME/raw-data/creditcard_2023.csv
+  ```
+- Prepare EMR cluster configuration (don't start yet)
+  - Create `src/rohit/infrastructure/emr-config.json`
+  - Use m5.large instances (cheaper)
+  - Configure auto-termination
+
+**Hussain (QA Lead):**
+
+- Validate dataset locally
+  ```python
+  # Quick validation script
+  import pandas as pd
+  df_sample = pd.read_csv('creditcard_2023.csv/creditcard_2023.csv', nrows=1000)
+  print(f"Columns: {df_sample.columns.tolist()}")
+  print(f"Shape: {df_sample.shape}")
+  print(f"Missing values: {df_sample.isnull().sum().sum()}")
+  if 'Class' in df_sample.columns:
+      print(f"Fraud rate: {df_sample['Class'].mean():.4%}")
+  ```
+- Document dataset schema and characteristics
+
+**Ansh (Evaluation Lead):**
+
+- Set up project structure
+  ```bash
+  mkdir -p src/{common,rohit,ansh,hussain}/{__pycache__}
+  mkdir -p tests/{rohit,ansh,hussain}
+  mkdir -p notebooks/{rohit,ansh,hussain}
+  ```
+- Install dependencies locally
+  ```bash
+  pip install pyspark numpy pandas matplotlib seaborn scikit-learn mlflow boto3 pyarrow
+  ```
+
+**Deliverable:** All infrastructure ready, dataset validated, local environments set up
+
+**Integration Point:** Team sync at end of Hour 1 to confirm S3 bucket name and dataset location
+
+---
+
+#### Hour 1-2: Shared Utilities (Parallel Development)
+
+**Goal:** Create common utilities that all team members will use
+
+**Rohit:**
+
+- Create `src/common/spark_session.py`
+
+  ```python
+  from pyspark.sql import SparkSession
+
+  def create_spark_session(app_name="FraudDetection", master="yarn"):
+      """Create optimized Spark session for EMR."""
+      spark = SparkSession.builder \
+          .appName(app_name) \
+          .master(master) \
+          .config("spark.sql.adaptive.enabled", "true") \
+          .config("spark.sql.adaptive.coalescePartitions.enabled", "true") \
+          .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer") \
+          .config("spark.sql.execution.arrow.pyspark.enabled", "true") \
+          .config("spark.executor.memory", "4g") \
+          .config("spark.executor.cores", "2") \
+          .config("spark.driver.memory", "2g") \
+          .getOrCreate()
+      spark.sparkContext.setLogLevel("WARN")
+      return spark
+  ```
+
+- Create `src/common/config.py`
+
+  ```python
+  import os
+  from dataclasses import dataclass
+
+  @dataclass
+  class ProjectConfig:
+      S3_BUCKET: str = os.getenv("S3_BUCKET", "csp554-fraud-detection-default")
+      RAW_DATA_PATH: str = f"s3://{S3_BUCKET}/raw-data/creditcard_2023.csv"
+      PROCESSED_DATA_PATH: str = f"s3://{S3_BUCKET}/processed/"
+      MODELS_PATH: str = f"s3://{S3_BUCKET}/models/"
+      OUTPUTS_PATH: str = f"s3://{S3_BUCKET}/outputs/"
+
+      @classmethod
+      def from_env(cls):
+          return cls(S3_BUCKET=os.getenv("S3_BUCKET", "csp554-fraud-detection-default"))
+
+  config = ProjectConfig.from_env()
+  ```
+
+**Hussain:**
+
+- Create `src/common/schema_validator.py`
+
+  ```python
+  from pyspark.sql import SparkSession
+  from pyspark.sql.types import StructType, StructField, DoubleType, IntegerType
+  from pyspark.sql import functions as F
+
+  def get_credit_card_schema():
+      """Define expected schema for credit card fraud dataset."""
+      return StructType([
+          StructField("Time", DoubleType(), True),
+          StructField("V1", DoubleType(), True),
+          StructField("V2", DoubleType(), True),
+          # ... V3-V28 ...
+          StructField("Amount", DoubleType(), True),
+          StructField("Class", IntegerType(), True),
+      ])
+
+  def validate_dataset(spark, s3_path):
+      """Validate dataset schema and basic quality."""
+      df = spark.read.csv(s3_path, header=True)
+      # Add validation logic
+      return df
+  ```
+
+**Ansh:**
+
+- Create `src/common/s3_utils.py`
+
+  ```python
+  import boto3
+  from botocore.exceptions import ClientError
+
+  def upload_file_to_s3(local_path, s3_bucket, s3_key):
+      """Upload file to S3 with error handling."""
+      s3_client = boto3.client('s3')
+      try:
+          s3_client.upload_file(local_path, s3_bucket, s3_key)
+          print(f"Successfully uploaded {local_path} to s3://{s3_bucket}/{s3_key}")
+      except ClientError as e:
+          print(f"Error uploading to S3: {e}")
+          raise
+
+  def download_file_from_s3(s3_bucket, s3_key, local_path):
+      """Download file from S3 with error handling."""
+      s3_client = boto3.client('s3')
+      try:
+          s3_client.download_file(s3_bucket, s3_key, local_path)
+          print(f"Successfully downloaded s3://{s3_bucket}/{s3_key} to {local_path}")
+      except ClientError as e:
+          print(f"Error downloading from S3: {e}")
+          raise
+  ```
+
+**Git Workflow:**
 
 ```bash
-# Navigate to project directory
-cd BigData_FinalProject
+# Each person works on their branch
+git checkout -b feature/shared-utilities
+# After completing their file:
+git add src/common/YOUR_FILE.py
+git commit -m "feat: Add [file] to shared utilities"
+git push origin feature/shared-utilities
 
-# Download Credit Card Fraud Detection dataset
-kaggle datasets download -d mlg-ulb/creditcardfraud -p data/raw/
-
-# Unzip dataset
-cd data/raw/
-unzip creditcardfraud.zip
-# Windows: Use 7-Zip or PowerShell: Expand-Archive creditcardfraud.zip
-
-# Verify file
-ls -lh creditcard.csv
-# Expected: ~150MB file
+# Rohit merges all to main
+git checkout main
+git merge feature/shared-utilities
+git push origin main
 ```
 
-### Step 3: Upload to S3
+**Deliverable:** All shared utilities created and merged to main branch
+
+**Integration Checkpoint 1 (Hour 2):** Shared utilities merged, all team members pull latest main
+
+---
+
+#### Hour 2-4: Data Profiling (Hussain) + Code Preparation (Rohit & Ansh)
+
+**Goal:** Complete data profiling on EMR, prepare feature engineering and evaluation code locally
+
+**Hussain (EMR Session 1 - 2 hours):**
+
+- Start EMR cluster (Rohit helps with cluster creation)
+  ```bash
+  aws emr create-cluster \
+      --name fraud-detection-profiling \
+      --release-label emr-6.15.0 \
+      --instance-type m5.large \
+      --instance-count 3 \
+      --applications Name=Spark Name=JupyterEnterpriseGateway \
+      --auto-terminate \
+      --ec2-attributes KeyName=YOUR_KEY_NAME
+  ```
+- Run data profiling on full dataset
+
+  ```python
+  # In EMR Studio notebook: notebooks/hussain/01_data_profiling.ipynb
+  from src.common.spark_session import create_spark_session
+  from src.common.config import config
+  from src.hussain.profiling.data_profiler import CreditCardDataProfiler
+
+  spark = create_spark_session("DataProfiling")
+  profiler = CreditCardDataProfiler(spark)
+
+  df = spark.read.csv(config.RAW_DATA_PATH, header=True)
+  profile = profiler.profile_dataset(df)
+  profiler.save_profile_to_s3(profile, f"s3://{config.S3_BUCKET}/profiling/")
+  ```
+
+- Generate quality report and save to S3
+- **Terminate cluster immediately after profiling completes**
+
+**Rohit (Local Development):**
+
+- Write feature engineering pipeline code locally
+  - Test with small sample dataset
+  - Create `src/rohit/pipelines/base_pipeline.py`
+  - Implement VectorAssembler, StandardScaler stages
+
+**Ansh (Local Development):**
+
+- Write evaluation metrics code locally
+  - Create `src/ansh/evaluation/metrics.py`
+  - Implement AUROC, AUPRC, Precision, Recall, F1
+  - Test with mock predictions
+
+**Deliverable:** Profiling report in S3, feature engineering and evaluation code ready for EMR
+
+**Handoff Point:** Hussain provides profiling report location → Rohit uses insights for feature engineering
+
+**Integration Checkpoint 2 (Hour 4):** Profiling complete, feature engineering can start
+
+---
+
+#### Hour 4-6: Feature Engineering & Model Training Prep (Rohit) + Evaluation Framework (Ansh)
+
+**Goal:** Process data and prepare for model training
+
+**Rohit (EMR Session 2 - Start, continues to Hour 8):**
+
+- Start EMR cluster (2nd session)
+- Load profiling metadata from Hussain's output
+  ```python
+  # Load profiling insights
+  from src.hussain.profiling.data_profiler import get_profiling_metadata
+  metadata = get_profiling_metadata(f"s3://{config.S3_BUCKET}/profiling/metadata_latest.json")
+  ```
+- Run feature engineering pipeline
+
+  ```python
+  from src.rohit.pipelines.base_pipeline import BaseFraudDetectionPipeline
+
+  pipeline = BaseFraudDetectionPipeline(spark)
+  df = pipeline.load_data(config.RAW_DATA_PATH)
+  feature_pipeline = pipeline.create_feature_pipeline()
+  processed_df = feature_pipeline.fit(df).transform(df)
+
+  # Save processed data
+  processed_df.write.parquet(config.PROCESSED_DATA_PATH + "processed_data.parquet")
+  ```
+
+- Prepare train/test split
+  ```python
+  train_df, test_df = processed_df.randomSplit([0.8, 0.2], seed=42)
+  train_df.write.parquet(config.PROCESSED_DATA_PATH + "train/")
+  test_df.write.parquet(config.PROCESSED_DATA_PATH + "test/")
+  ```
+
+**Ansh (Local Development):**
+
+- Complete evaluation framework
+  - Finish `src/ansh/evaluation/metrics.py`
+  - Create `src/ansh/evaluation/cross_validation.py`
+  - Test with sample data locally
+
+**Hussain (Local Development):**
+
+- Write test cases
+  - Create `tests/test_pipelines.py`
+  - Create `tests/test_evaluation.py`
+- Start documentation structure
+
+**Deliverable:** Processed data in S3, evaluation framework ready, test cases written
+
+---
+
+#### Hour 6-8: Model Training (Rohit) + Model Evaluation (Ansh)
+
+**Goal:** Train all three models and evaluate them
+
+**Rohit (Continues EMR Session 2):**
+
+- Train Logistic Regression
+
+  ```python
+  from src.rohit.pipelines.logistic_regression import LogisticRegressionPipeline
+
+  lr_pipeline = LogisticRegressionPipeline(spark)
+  lr_model = lr_pipeline.train(train_df)
+  lr_pipeline.save_model(lr_model, "logistic_regression", "v1")
+  ```
+
+- Train Random Forest
+
+  ```python
+  from src.rohit.pipelines.random_forest import RandomForestPipeline
+
+  rf_pipeline = RandomForestPipeline(spark)
+  rf_model = rf_pipeline.train(train_df)
+  rf_pipeline.save_model(rf_model, "random_forest", "v1")
+  ```
+
+- Train GBT Classifier
+
+  ```python
+  from src.rohit.pipelines.gbt_classifier import GBTPipeline
+
+  gbt_pipeline = GBTPipeline(spark)
+  gbt_model = gbt_pipeline.train(train_df)
+  gbt_pipeline.save_model(gbt_model, "gbt_classifier", "v1")
+  ```
+
+**Ansh (Parallel on EMR):**
+
+- Evaluate each model as it's trained
+
+  ```python
+  from src.ansh.evaluation.metrics import FraudDetectionMetrics
+
+  metrics_calc = FraudDetectionMetrics(spark)
+
+  # Evaluate LR
+  lr_predictions = lr_model.transform(test_df)
+  lr_metrics = metrics_calc.calculate_all_metrics(lr_predictions)
+  metrics_calc.save_metrics_to_s3(lr_metrics, "logistic_regression", "v1")
+
+  # Repeat for RF and GBT
+  ```
+
+**Hussain (Local):**
+
+- Run integration tests
+- Update documentation
+
+**Deliverable:** All three models trained and evaluated, metrics saved to S3
+
+**Integration Checkpoint 3 (Hour 8):** Models trained, evaluation complete, ready for hyperparameter tuning
+
+---
+
+#### Hour 8-10: Hyperparameter Tuning (Ansh) + Testing (Hussain) + Optimization (Rohit)
+
+**Goal:** Optimize models and ensure quality
+
+**Ansh (EMR Session 2 - Continue):**
+
+- Hyperparameter tuning with MLflow
+
+  ```python
+  from src.ansh.evaluation.hyperparameter_tuning import HyperparameterTuner
+  from pyspark.ml.classification import LogisticRegression
+
+  tuner = HyperparameterTuner(spark)
+  best_lr_model = tuner.tune_logistic_regression(train_df, test_df)
+  # Repeat for RF and GBT
+  ```
+
+- Generate comparison report
+
+  ```python
+  from src.ansh.evaluation.model_comparison import ModelComparator
+
+  comparator = ModelComparator(spark)
+  comparison_report = comparator.compare_models(
+      [lr_metrics, rf_metrics, gbt_metrics],
+      ["Logistic Regression", "Random Forest", "GBT"]
+  )
+  comparator.save_report_to_s3(comparison_report)
+  ```
+
+**Hussain (Local):**
+
+- Comprehensive testing
+  ```bash
+  pytest tests/ -v --cov=src
+  ```
+- Data quality validation
+- Update test coverage
+
+**Rohit (Local):**
+
+- Model optimization review
+- Prepare for adversarial training integration
+- **Terminate EMR cluster after Ansh completes tuning**
+
+**Deliverable:** Optimized models, comprehensive test coverage, ready for Day 2
+
+**End of Day 1 Checkpoint (Hour 10):** All core components complete, models optimized, tests passing
+
+---
+
+### Day 2: Advanced Features & Integration (Hours 10-20)
+
+#### Hour 10-12: Adversarial Robustness (Ansh + Hussain)
+
+**Goal:** Implement and test adversarial attacks and defenses
+
+**Ansh (Local Prep, then EMR Session 3):**
+
+- Implement FGSM attack (local prep)
+
+  ```python
+  # src/ansh/adversarial/fgsm_attack.py
+  from src.ansh.adversarial.fgsm_attack import FGSMAttack
+
+  attack = FGSMAttack(epsilon=0.1)
+  adversarial_examples = attack.generate_attacks(model, test_df)
+  ```
+
+- Test locally with sample data
+
+**Hussain (Local Prep, then EMR Session 3):**
+
+- Implement defense mechanisms (local prep)
+
+  ```python
+  # src/hussain/defenses/feature_clamping.py
+  from src.hussain.defenses.feature_clamping import FeatureClamping
+
+  defense = FeatureClamping(min_values, max_values)
+  protected_df = defense.apply(test_df)
+  ```
+
+- Test locally
+
+**Rohit (EMR Session 3 - Start):**
+
+- Start EMR cluster (3rd session)
+- Integrate adversarial training pipeline
+
+  ```python
+  from src.rohit.pipelines.adversarial_training import AdversarialTrainingPipeline
+
+  adv_pipeline = AdversarialTrainingPipeline(spark)
+  robust_model = adv_pipeline.train_with_adversarial(train_df, adversarial_examples)
+  ```
+
+**All Together (EMR Session 3):**
+
+- Run adversarial attacks on all models
+- Test defense mechanisms
+- Calculate robustness metrics
+
+  ```python
+  from src.ansh.adversarial.robustness_metrics import RobustnessEvaluator
+
+  evaluator = RobustnessEvaluator(spark)
+  robustness_scores = evaluator.evaluate_robustness(
+      models=[lr_model, rf_model, gbt_model],
+      test_df=test_df,
+      adversarial_examples=adversarial_examples
+  )
+  evaluator.save_robustness_metrics_to_s3(robustness_scores)
+  ```
+
+**Deliverable:** Adversarial attacks implemented, defenses tested, robustness metrics calculated
+
+---
+
+#### Hour 12-14: Streaming Integration (Rohit + Ansh)
+
+**Goal:** Implement structured streaming for real-time fraud detection
+
+**Rohit (Continues EMR Session 3):**
+
+- Create streaming pipeline
+
+  ```python
+  from src.rohit.streaming.streaming_integration import StreamingFraudDetection
+
+  streaming_app = StreamingFraudDetection(spark, best_model)
+  streaming_query = streaming_app.start_streaming(
+      input_path="s3://bucket/streaming-input/",
+      output_path="s3://bucket/streaming-output/",
+      checkpoint_path="s3://bucket/checkpoints/streaming/"
+  )
+  ```
+
+**Ansh (Parallel on EMR):**
+
+- Implement streaming evaluation
+
+  ```python
+  from src.ansh.streaming.streaming_evaluator import StreamingEvaluator
+
+  evaluator = StreamingEvaluator(spark)
+  streaming_metrics = evaluator.evaluate_streaming_batches(
+      streaming_output_path,
+      batch_interval="1 minute"
+  )
+  ```
+
+**Hussain (Local):**
+
+- Test streaming components
+- Update documentation
+
+**Deliverable:** Streaming pipeline operational, streaming evaluation working
+
+---
+
+#### Hour 14-16: Final Integration & Testing (All)
+
+**Goal:** End-to-end integration and comprehensive testing
+
+**All Together:**
+
+- Run complete end-to-end pipeline
+
+  ```python
+  # scripts/final_integration_test.py
+  from src.common.spark_session import create_spark_session
+  from src.common.config import config
+
+  spark = create_spark_session("FinalIntegration")
+
+  # Test data loading
+  df = spark.read.csv(config.RAW_DATA_PATH, header=True)
+  assert df.count() > 0, "Data loading failed"
+
+  # Test model loading
+  from src.rohit.pipelines.base_pipeline import load_model_from_s3
+  model = load_model_from_s3("logistic_regression", "v1")
+  assert model is not None, "Model loading failed"
+
+  # Test evaluation
+  predictions = model.transform(test_df)
+  from src.ansh.evaluation.metrics import FraudDetectionMetrics
+  metrics = FraudDetectionMetrics(spark).calculate_all_metrics(predictions)
+  assert metrics['auroc'] > 0.85, "Model performance below threshold"
+
+  print("✅ All integration tests passed!")
+  ```
+
+- Performance benchmarking
+- Save all final outputs to S3
+- **Terminate EMR cluster**
+
+**Deliverable:** Fully integrated system, all tests passing, performance benchmarks documented
+
+**Integration Checkpoint 5 (Hour 16):** Advanced features complete, system fully integrated
+
+---
+
+#### Hour 16-18: Documentation & Report (Hussain Lead, All Contribute)
+
+**Goal:** Complete technical report and documentation
+
+**Hussain (Lead):**
+
+- Technical report structure
+  - Introduction
+  - Methodology
+  - Results
+  - Discussion
+  - Conclusion
+- Code documentation
+- Presentation outline
+
+**Ansh:**
+
+- Results section with visualizations
+- Metrics interpretation
+- Adversarial robustness analysis
+
+**Rohit:**
+
+- Architecture documentation
+- Pipeline descriptions
+- Performance analysis
+
+**All:**
+
+- Review and refine report
+- Prepare presentation slides
+
+**Deliverable:** Technical report draft, presentation slides, code documentation complete
+
+---
+
+#### Hour 18-20: Final Polish & Submission (All)
+
+**Goal:** Final cleanup and submission preparation
+
+**All Together:**
+
+- Code cleanup
+  ```bash
+  # Format code
+  black src/ tests/
+  # Lint
+  flake8 src/ tests/
+  # Security check
+  bandit -r src/
+  ```
+- Final testing
+  ```bash
+  pytest tests/ -v --cov=src --cov-report=html
+  ```
+- Repository organization
+  - Ensure all files are committed
+  - Update README if needed
+  - Verify all deliverables
+- Create submission package
+  - Technical report (PDF)
+  - Presentation (PDF/PPT)
+  - Code repository (GitHub link)
+  - Demo video/instructions
+
+**Deliverable:** Project complete, ready for submission
+
+**Final Checkpoint (Hour 20):** All deliverables complete, project submission-ready
+
+---
+
+### EMR Cluster Usage Windows
+
+| Session       | Hours | Duration     | Purpose                                                    | Owner       | Cost Estimate |
+| ------------- | ----- | ------------ | ---------------------------------------------------------- | ----------- | ------------- |
+| **Session 1** | 2-4   | 2 hours      | Data Profiling                                             | Hussain     | ~$0.60        |
+| **Session 2** | 4-10  | 6 hours      | Feature Engineering, Model Training, Hyperparameter Tuning | Rohit, Ansh | ~$1.80        |
+| **Session 3** | 10-16 | 6 hours      | Adversarial Testing, Streaming, Final Integration          | All         | ~$1.80        |
+| **Total**     |       | **14 hours** |                                                            |             | **~$4.20**    |
+
+**Cost Optimization:**
+
+- Use m5.large instances (cheaper than m5.xlarge)
+- Enable auto-termination
+- Terminate immediately after each session
+- Use Spot Instances for core nodes (save 70% → ~$1.30 total)
+
+---
+
+### Parallel Work Matrix
+
+| Time Window | Rohit           | Ansh               | Hussain            | Can Work in Parallel?                 |
+| ----------- | --------------- | ------------------ | ------------------ | ------------------------------------- |
+| H0-1        | Setup           | Setup              | Setup              | ❌ (All together)                     |
+| H1-2        | Shared Utils    | Shared Utils       | Shared Utils       | ✅ (Different files)                  |
+| H2-4        | Local Dev       | Local Dev          | EMR Profiling      | ✅ (Hussain on EMR, others local)     |
+| H4-6        | EMR Features    | Local Dev          | Local Dev          | ✅ (Rohit on EMR, others local)       |
+| H6-8        | EMR Training    | EMR Evaluation     | Local Testing      | ✅ (Rohit+Ansh on EMR, Hussain local) |
+| H8-10       | Local Prep      | EMR Tuning         | Local Testing      | ✅ (Ansh on EMR, others local)        |
+| H10-12      | EMR Setup       | EMR Adversarial    | EMR Adversarial    | ✅ (All on EMR together)              |
+| H12-14      | EMR Streaming   | EMR Streaming Eval | Local Testing      | ✅ (Rohit+Ansh on EMR, Hussain local) |
+| H14-16      | EMR Integration | EMR Integration    | EMR Integration    | ❌ (All together)                     |
+| H16-18      | Documentation   | Documentation      | Documentation Lead | ✅ (All contribute)                   |
+| H18-20      | Final Polish    | Final Polish       | Final Polish       | ❌ (All together)                     |
+
+**Key Parallel Opportunities:**
+
+- Hour 2-4: Hussain on EMR, Rohit & Ansh prepare code locally
+- Hour 4-6: Rohit on EMR, Ansh & Hussain work locally
+- Hour 6-8: Rohit & Ansh on EMR together, Hussain tests locally
+- Hour 16-18: All contribute to documentation in parallel
+
+---
+
+### Integration Checkpoints
+
+| Checkpoint       | Hour | What Happens               | Validation                                      |
+| ---------------- | ---- | -------------------------- | ----------------------------------------------- |
+| **Checkpoint 1** | 2    | Shared utilities merged    | `git log --oneline` shows all common files      |
+| **Checkpoint 2** | 4    | Profiling complete         | `aws s3 ls s3://bucket/profiling/` shows report |
+| **Checkpoint 3** | 8    | Models trained & evaluated | `aws s3 ls s3://bucket/models/` shows 3 models  |
+| **Checkpoint 4** | 10   | Day 1 complete             | All tests pass, models optimized                |
+| **Checkpoint 5** | 16   | Advanced features complete | Streaming operational, adversarial tested       |
+| **Checkpoint 6** | 20   | Final integration complete | All deliverables ready                          |
+
+**Checkpoint Validation Commands:**
+
+```bash
+# Checkpoint 1: Shared utilities
+git checkout main
+git pull origin main
+ls -la src/common/
+
+# Checkpoint 2: Profiling
+aws s3 ls s3://$BUCKET_NAME/profiling/ --recursive
+
+# Checkpoint 3: Models
+aws s3 ls s3://$BUCKET_NAME/models/ --recursive
+
+# Checkpoint 4: Day 1 complete
+pytest tests/ -v
+aws s3 ls s3://$BUCKET_NAME/outputs/evaluation/
+
+# Checkpoint 5: Advanced features
+aws s3 ls s3://$BUCKET_NAME/outputs/adversarial/
+aws s3 ls s3://$BUCKET_NAME/checkpoints/streaming/
+
+# Checkpoint 6: Final
+python scripts/final_integration_test.py
+```
+
+---
+
+### Cursor-Assisted Development Tips
+
+**Where Cursor Can Accelerate Development:**
+
+1. **Hour 1-2 (Shared Utilities):** Use Cursor to generate boilerplate code for Spark sessions, S3 utils, config files
+2. **Hour 2-4 (Code Prep):** Use Cursor to implement MLlib pipelines, evaluation metrics with proper imports
+3. **Hour 4-6 (Feature Engineering):** Use Cursor to create VectorAssembler, StandardScaler configurations
+4. **Hour 6-8 (Model Training):** Use Cursor to generate model training code for LR, RF, GBT
+5. **Hour 8-10 (Hyperparameter Tuning):** Use Cursor to create ParamGridBuilder configurations
+6. **Hour 10-12 (Adversarial):** Use Cursor to implement FGSM attack and defense mechanisms
+7. **Hour 12-14 (Streaming):** Use Cursor to create Structured Streaming queries
+8. **Hour 16-18 (Documentation):** Use Cursor to generate documentation strings and report sections
+
+**Cursor Commands to Use:**
+
+- "Generate PySpark code for [task]"
+- "Create test cases for [function]"
+- "Add error handling to [code]"
+- "Generate documentation for [module]"
+
+---
+
+## Pre-Day 1: Dataset Preparation
+
+**Timeline:** Before Day 1 starts (can be done in advance)  
+**Owner:** Rohit (with Hussain validation)
+
+### Step 1: Dataset Validation
+
+Since we're using `creditcard_2023.csv` (already available locally), validate it first:
+
+```bash
+# Quick validation (run locally)
+python -c "
+import pandas as pd
+df = pd.read_csv('creditcard_2023.csv/creditcard_2023.csv', nrows=1000)
+print(f'Columns: {df.columns.tolist()}')
+print(f'Shape sample: {df.shape}')
+print(f'Missing values: {df.isnull().sum().sum()}')
+if 'Class' in df.columns:
+    print(f'Fraud rate: {df[\"Class\"].mean():.4%}')
+"
+```
+
+**Expected Schema:**
+
+- Time, V1-V28 (features), Amount, Class (target: 0=normal, 1=fraud)
+
+### Step 2: Upload to S3
 
 ```bash
 # Configure AWS CLI (if not done)
@@ -151,14 +896,14 @@ aws configure
 export BUCKET_NAME="csp554-fraud-detection-$(date +%s)"
 aws s3 mb s3://$BUCKET_NAME --region us-east-1
 
-# Upload dataset
-aws s3 cp data/raw/creditcard.csv s3://$BUCKET_NAME/raw-data/creditcard.csv
+# Upload dataset (using creditcard_2023.csv)
+aws s3 cp creditcard_2023.csv/creditcard_2023.csv s3://$BUCKET_NAME/raw-data/creditcard_2023.csv
 
 # Verify upload
 aws s3 ls s3://$BUCKET_NAME/raw-data/
 ```
 
-### Step 4: Schema Validation
+### Step 3: Schema Validation
 
 **File:** `src/common/schema_validator.py`
 
@@ -476,7 +1221,7 @@ git push origin --delete feature/YOUR-BRANCH
 ```
 s3://csp554-fraud-detection-{timestamp}/
 ├── raw-data/
-│   └── creditcard.csv                    # Original dataset
+│   └── creditcard_2023.csv               # Original dataset
 ├── processed/
 │   ├── train/
 │   │   └── train_YYYYMMDD.parquet        # Training data
@@ -593,49 +1338,96 @@ aws emr create-studio-session-mapping \
 
 ## Dependency Matrix
 
-### Task Dependencies
+### Task Dependencies (2-Day Timeline)
 
-| Task                   | Depends On            | Blocks                 | Owner   |
-| ---------------------- | --------------------- | ---------------------- | ------- |
-| Dataset Upload         | Kaggle API Setup      | All downstream tasks   | Rohit   |
-| Data Profiling         | Dataset Upload        | Feature Engineering    | Hussain |
-| Feature Engineering    | Data Profiling        | Model Training         | Rohit   |
-| Model Training         | Feature Engineering   | Model Evaluation       | Rohit   |
-| Model Evaluation       | Model Training        | Adversarial Testing    | Ansh    |
-| Adversarial Testing    | Model Evaluation      | Defense Implementation | Ansh    |
-| Defense Implementation | Adversarial Testing   | Final Testing          | Hussain |
-| Streaming Integration  | Model Training        | Streaming Evaluation   | Rohit   |
-| Streaming Evaluation   | Streaming Integration | Final Report           | Ansh    |
-| Final Testing          | All components        | Documentation          | Hussain |
-| Documentation          | All components        | Submission             | Hussain |
+| Task                   | Depends On            | Blocks                 | Owner   | Hour Range | EMR Session |
+| ---------------------- | --------------------- | ---------------------- | ------- | ---------- | ----------- |
+| Dataset Upload         | Pre-Day 1             | All downstream tasks   | Rohit   | H0-1       | None        |
+| Shared Utilities       | Dataset Upload        | Data Profiling         | All     | H1-2       | None        |
+| Data Profiling         | Shared Utilities      | Feature Engineering    | Hussain | H2-4       | Session 1   |
+| Feature Engineering    | Data Profiling        | Model Training         | Rohit   | H4-6       | Session 2   |
+| Model Training         | Feature Engineering   | Model Evaluation       | Rohit   | H6-8       | Session 2   |
+| Model Evaluation       | Model Training        | Hyperparameter Tuning  | Ansh    | H6-8       | Session 2   |
+| Hyperparameter Tuning  | Model Evaluation      | Adversarial Testing    | Ansh    | H8-10      | Session 2   |
+| Adversarial Testing    | Hyperparameter Tuning | Defense Implementation | Ansh    | H10-12     | Session 3   |
+| Defense Implementation | Adversarial Testing   | Streaming Integration  | Hussain | H10-12     | Session 3   |
+| Streaming Integration  | Model Training        | Streaming Evaluation   | Rohit   | H12-14     | Session 3   |
+| Streaming Evaluation   | Streaming Integration | Final Integration      | Ansh    | H12-14     | Session 3   |
+| Final Integration      | All components        | Documentation          | All     | H14-16     | Session 3   |
+| Documentation          | All components        | Submission             | Hussain | H16-18     | None        |
+| Final Polish           | Documentation         | Submission             | All     | H18-20     | None        |
 
-### Critical Path
+### Critical Path (2-Day Sprint)
 
 ```
-Dataset Upload → Data Profiling → Feature Engineering → Model Training
-→ Model Evaluation → Adversarial Testing → Defense Implementation
-→ Streaming Integration → Final Testing → Documentation
+Hour 0-1: Dataset Upload (Rohit)
+    ↓
+Hour 1-2: Shared Utilities (All - parallel)
+    ↓
+Hour 2-4: Data Profiling (Hussain) [EMR Session 1]
+    ↓
+Hour 4-6: Feature Engineering (Rohit) [EMR Session 2]
+    ↓
+Hour 6-8: Model Training (Rohit) + Evaluation (Ansh) [EMR Session 2]
+    ↓
+Hour 8-10: Hyperparameter Tuning (Ansh) [EMR Session 2]
+    ↓
+Hour 10-12: Adversarial Testing (Ansh + Hussain) [EMR Session 3]
+    ↓
+Hour 12-14: Streaming Integration (Rohit + Ansh) [EMR Session 3]
+    ↓
+Hour 14-16: Final Integration (All) [EMR Session 3]
+    ↓
+Hour 16-18: Documentation (Hussain lead, all contribute)
+    ↓
+Hour 18-20: Final Polish (All)
 ```
 
-**Estimated Critical Path Duration:** 18 days (with buffer)
+**Estimated Critical Path Duration:** 20 hours (2 days with parallel work)
+
+### Parallel Work Opportunities
+
+**Can Run in Parallel:**
+
+- Hour 2-4: Hussain (EMR profiling) + Rohit & Ansh (local code prep)
+- Hour 4-6: Rohit (EMR features) + Ansh & Hussain (local development)
+- Hour 6-8: Rohit & Ansh (EMR training/eval) + Hussain (local testing)
+- Hour 8-10: Ansh (EMR tuning) + Rohit & Hussain (local prep/testing)
+- Hour 12-14: Rohit & Ansh (EMR streaming) + Hussain (local testing)
+- Hour 16-18: All (documentation in parallel)
+
+**Must Run Sequentially:**
+
+- Data Profiling → Feature Engineering (Hussain blocks Rohit)
+- Feature Engineering → Model Training (Rohit blocks himself)
+- Model Training → Model Evaluation (Rohit blocks Ansh)
+- Model Evaluation → Adversarial Testing (Ansh blocks himself)
 
 ---
 
 ## Cost Management
 
-### AWS Cost Estimates
+### AWS Cost Estimates (2-Day Sprint)
 
-| Phase     | Component                          | Estimated Cost         | Duration    |
-| --------- | ---------------------------------- | ---------------------- | ----------- |
-| Phase 0   | S3 Storage (150MB)                 | $0.003/month           | Ongoing     |
-| Phase 1   | EMR Cluster (3x m5.xlarge)         | $0.192/hour × 20 hours | $3.84       |
-| Phase 2   | EMR Cluster + S3 Operations        | $0.192/hour × 30 hours | $5.76       |
-| Phase 3   | EMR Cluster + Adversarial Training | $0.192/hour × 25 hours | $4.80       |
-| Phase 4   | EMR Cluster + Streaming            | $0.192/hour × 15 hours | $2.88       |
-| Phase 5   | EMR Cluster (minimal)              | $0.192/hour × 5 hours  | $0.96       |
-| **Total** |                                    |                        | **~$18.24** |
+| Session                             | Component                 | Instance Type | Duration     | Cost/Hour    | Total Cost |
+| ----------------------------------- | ------------------------- | ------------- | ------------ | ------------ | ---------- |
+| Pre-Day 1                           | S3 Storage (dataset)      | N/A           | Ongoing      | $0.003/month | $0.003     |
+| Session 1                           | EMR Cluster (3x m5.large) | m5.large      | 2 hours      | $0.096/node  | $0.58      |
+| Session 2                           | EMR Cluster (3x m5.large) | m5.large      | 6 hours      | $0.096/node  | $1.73      |
+| Session 3                           | EMR Cluster (3x m5.large) | m5.large      | 6 hours      | $0.096/node  | $1.73      |
+| **Total (On-Demand)**               |                           |               | **14 hours** |              | **~$4.04** |
+| **Total (With Spot - 70% savings)** |                           |               | **14 hours** |              | **~$1.21** |
 
-_Note: Costs vary by region and usage. Monitor actual costs in AWS Cost Explorer._
+**Cost Breakdown:**
+
+- m5.large: $0.096/hour per node
+- 3 nodes (1 master + 2 core): $0.288/hour total
+- Session 1 (2h): $0.58
+- Session 2 (6h): $1.73
+- Session 3 (6h): $1.73
+- **Total: ~$4.04** (or **~$1.21 with Spot instances**)
+
+_Note: Costs vary by region and usage. Monitor actual costs in AWS Cost Explorer. Use Spot instances for core nodes to save 70%._
 
 ### Cost Optimization Checklist
 
@@ -661,9 +1453,9 @@ aws budgets create-budget \
 
 ```json
 {
-  "BudgetName": "fraud-detection-project-budget",
+  "BudgetName": "fraud-detection-2day-sprint-budget",
   "BudgetLimit": {
-    "Amount": "25",
+    "Amount": "10",
     "Unit": "USD"
   },
   "TimeUnit": "MONTHLY",

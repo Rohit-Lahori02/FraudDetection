@@ -30,11 +30,11 @@ This project implements a production-grade fraud detection system using **Apache
 
 ## 👥 Team
 
-| Role | Team Member | Responsibilities |
-|------|------------|-----------------|
-| 🏗️ **Technical Lead / ML Pipeline Architect** | **Rohit Lahori** | EMR setup, MLlib pipelines, optimization, streaming integration |
-| 📊 **Evaluation & Research Lead** | **Ansh Kaushik** | Evaluation metrics, hyperparameter tuning, adversarial robustness, streaming evaluation |
-| ✅ **Quality Assurance & Documentation Lead** | **Hussain Bin Yousuf** | Data profiling, testing framework, adversarial defenses, technical report |
+| Role                                          | Team Member            | Responsibilities                                                                        |
+| --------------------------------------------- | ---------------------- | --------------------------------------------------------------------------------------- |
+| 🏗️ **Technical Lead / ML Pipeline Architect** | **Rohit Lahori**       | EMR setup, MLlib pipelines, optimization, streaming integration                         |
+| 📊 **Evaluation & Research Lead**             | **Ansh Kaushik**       | Evaluation metrics, hyperparameter tuning, adversarial robustness, streaming evaluation |
+| ✅ **Quality Assurance & Documentation Lead** | **Hussain Bin Yousuf** | Data profiling, testing framework, adversarial defenses, technical report               |
 
 ---
 
@@ -95,7 +95,9 @@ This project implements a production-grade fraud detection system using **Apache
 ## 📚 Documentation
 
 ### 📘 Master Integration Plan
+
 **Start here!** The central orchestration document covering:
+
 - Project architecture and integration points
 - Git branching strategy and collaboration workflow
 - S3 bucket structure and EMR Studio organization
@@ -108,16 +110,19 @@ This project implements a production-grade fraud detection system using **Apache
 ### 👨‍💻 Individual Execution Plans
 
 #### 🏗️ Rohit Lahori - Technical Lead
+
 Complete guide for EMR setup, MLlib pipelines, optimization, and streaming integration.
 
 👉 **[Read ROHIT_LAHORI_PLAN.md](./ROHIT_LAHORI_PLAN.md)**
 
 #### 📊 Ansh Kaushik - Evaluation Lead
+
 Detailed instructions for evaluation metrics, hyperparameter tuning, adversarial robustness, and streaming evaluation.
 
 👉 **[Read ANSH_KAUSHIK_PLAN.md](./ANSH_KAUSHIK_PLAN.md)**
 
 #### ✅ Hussain Bin Yousuf - QA Lead
+
 Comprehensive guide for data profiling, testing framework, adversarial defenses, and documentation.
 
 👉 **[Read HUSSAIN_BIN_YOUSUF_PLAN.md](./HUSSAIN_BIN_YOUSUF_PLAN.md)**
@@ -137,18 +142,21 @@ Comprehensive guide for data profiling, testing framework, adversarial defenses,
 ### Initial Setup
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/Rohit-Lahori02/FraudDetection.git
    cd FraudDetection
    ```
 
 2. **Set up AWS credentials**
+
    ```bash
    aws configure
    # Enter your AWS Access Key ID, Secret Access Key, region, and output format
    ```
 
 3. **Configure Kaggle API**
+
    ```bash
    # Download kaggle.json from your Kaggle account settings
    mkdir -p ~/.kaggle
@@ -157,6 +165,7 @@ Comprehensive guide for data profiling, testing framework, adversarial defenses,
    ```
 
 4. **Follow Phase 0: Dataset Preparation**
+
    - See [MASTER_INTEGRATION_PLAN.md](./MASTER_INTEGRATION_PLAN.md#phase-0-dataset-preparation)
 
 5. **Set up EMR Cluster**
@@ -167,33 +176,39 @@ Comprehensive guide for data profiling, testing framework, adversarial defenses,
 ## 📊 Features
 
 ### 🔍 Data Profiling
+
 - Comprehensive statistical analysis
 - Missing value detection
 - Data quality validation
 - Automated HTML report generation
 
 ### 🤖 Machine Learning Models
+
 - **Logistic Regression**: Fast, interpretable baseline model
 - **Random Forest**: Robust ensemble method
 - **Gradient Boosted Trees**: High-performance boosting algorithm
 
 ### 🎯 Model Optimization
+
 - Stratified cross-validation for imbalanced data
 - Hyperparameter tuning with MLflow tracking
 - Model comparison and statistical significance testing
 
 ### 🛡️ Adversarial Robustness
+
 - FGSM (Fast Gradient Sign Method) attack implementation
 - Feature clamping defense
 - Ensemble voting defense
 - Robustness metrics and evaluation
 
 ### 📡 Real-time Streaming
+
 - Structured streaming with Spark
 - Real-time fraud detection
 - Batch evaluation and metrics aggregation
 
 ### 📈 Evaluation Metrics
+
 - AUROC (Area Under ROC Curve)
 - AUPRC (Area Under Precision-Recall Curve)
 - Precision, Recall, F1-Score
@@ -268,23 +283,24 @@ See [MASTER_INTEGRATION_PLAN.md](./MASTER_INTEGRATION_PLAN.md#cost-management) f
 
 ## 🔧 Technologies & Tools
 
-| Category | Technology |
-|----------|-----------|
-| **Big Data** | Apache Spark 3.5.0, Spark MLlib |
-| **Cloud Platform** | AWS EMR, AWS S3, AWS IAM, AWS CloudWatch |
-| **ML Framework** | Spark MLlib (Logistic Regression, Random Forest, GBT) |
-| **Experiment Tracking** | MLflow |
-| **Testing** | pytest, pytest-spark, moto |
-| **Data Profiling** | ydata-profiling |
-| **Visualization** | matplotlib, seaborn |
-| **CI/CD** | GitHub Actions |
-| **Version Control** | Git, GitHub |
+| Category                | Technology                                            |
+| ----------------------- | ----------------------------------------------------- |
+| **Big Data**            | Apache Spark 3.5.0, Spark MLlib                       |
+| **Cloud Platform**      | AWS EMR, AWS S3, AWS IAM, AWS CloudWatch              |
+| **ML Framework**        | Spark MLlib (Logistic Regression, Random Forest, GBT) |
+| **Experiment Tracking** | MLflow                                                |
+| **Testing**             | pytest, pytest-spark, moto                            |
+| **Data Profiling**      | ydata-profiling                                       |
+| **Visualization**       | matplotlib, seaborn                                   |
+| **CI/CD**               | GitHub Actions                                        |
+| **Version Control**     | Git, GitHub                                           |
 
 ---
 
 ## 📞 Support & Escalation
 
 For issues or questions:
+
 1. Check the relevant execution plan document
 2. Review the [MASTER_INTEGRATION_PLAN.md](./MASTER_INTEGRATION_PLAN.md#emergency-scenarios--rollback-procedures) for emergency procedures
 3. Consult team members based on their expertise areas
@@ -313,4 +329,3 @@ This project is part of a Master's program coursework. All rights reserved.
 ⭐ Star this repo if you find it helpful!
 
 </div>
-
