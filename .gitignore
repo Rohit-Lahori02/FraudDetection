@@ -1,1 +1,46 @@
+# Dataset
 creditcard_2023.csv/creditcard_2023.csv
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# AWS/Environment
+.env
+.aws/
+*.pem
+
+# Logs
+*.log
+logs/
+
+# Spark
+checkpoint/
+spark-warehouse/
+derby.log
+metastore_db/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Test coverage
+.coverage
+htmlcov/
+.pytest_cache/
