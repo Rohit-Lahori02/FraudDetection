@@ -324,7 +324,7 @@ This project is part of a Master's program coursework. All rights reserved.
 
 <div align="center">
 
-**Built with ❤️ by Ansh Kaushik, Rohit Lahori, and Hussain Bin Yousuf**
+**Built with ❤️ by Ansh Kaushik, Rohit Lahori, Lalith Kothuru, Jacob Callahan and Hussain Bin Yousuf**
 
 ⭐ Star this repo if you find it helpful!
 
