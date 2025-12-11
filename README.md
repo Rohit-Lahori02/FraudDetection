@@ -35,6 +35,8 @@ This project implements a production-grade fraud detection system using **Apache
 | 🏗️ **Technical Lead / ML Pipeline Architect** | **Rohit Lahori**       | EMR setup, MLlib pipelines, optimization, streaming integration                         |
 | 📊 **Evaluation & Research Lead**             | **Ansh Kaushik**       | Evaluation metrics, hyperparameter tuning, adversarial robustness, streaming evaluation |
 | ✅ **Quality Assurance & Documentation Lead** | **Hussain Bin Yousuf** | Data profiling, testing framework, adversarial defenses, technical report               |
+| ⛓️‍💥 **Pipeline Integration & Reporting Lead**  | **Lalith Kothuru**     | Pipeline consistency, integration validation, technical reporting and synthesis         |
+| 📈 **Data Visualization & Quality Analyst**   | **Jacob Callahan**     | Data visualization, distribution analysis, class balance profiling, presentation visuals|
 
 ---
 
